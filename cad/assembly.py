@@ -264,7 +264,9 @@ def mount():
     add("socket_flange", ring(12, 4.1, 2, (SOCKET_X, 0, SEAT_Z + 1), "z"), "bronze", "mount", (0, 0, -29))
     add("socket_sleeve", ring(SOCKET_HOLE[0] / 2, 4.1, SOCKET_HOLE[1], (SOCKET_X, 0, SEAT_Z - SOCKET_HOLE[1] / 2), "z"),
         "bronze", "mount", (0, 0, -25))
-    seat = (rounded_box(150, 120, 25, 6, (SOCKET_X + 10, 0, SEAT_Z - 12.5))
+    # A strip of the seat, running fore and aft beside the tiller, long enough
+    # to carry the remote's base.
+    seat = (rounded_box(150, 320, 25, 6, (SOCKET_X + 10, -100, SEAT_Z - 12.5))
             - cyl(SOCKET_HOLE[0] / 2 + .05, SOCKET_HOLE[1] + 2, (SOCKET_X, 0, SEAT_Z - SOCKET_HOLE[1] / 2), "z"))
     # Exploded parts stay above the site's ground plane (z -170), and the seat
     # (top z -140) below the exploded housing (bottom z -137).
@@ -272,31 +274,37 @@ def mount():
 
 
 def remote():
-    # Keypad pod on GoPro-style fingers, a 1-inch ball arm, and a base.
-    x, y = 215, -95
-    ex = (75, -35, 0)
-    add("remote_body", rounded_box(96, 60, 20, 6, (x, y, -20)), "graphite", "remote", ex)
-    add("remote_display", rounded_box(56, 12, 1, .4, (x, y + 20, -9.6)), "black", "remote", ex)
+    # Keypad pod on GoPro-style fingers and a 1-inch ball arm, its base screwed
+    # to the cockpit seat beside the pilot.
+    x, y = SOCKET_X + 10, -200
+    lift = SEAT_Z + 168.5          # stack drawn from a base at z -168.5
+    ex = (0, -40, -10)             # rides with the exploded seat, then lifts clear
+
+    def at(z):
+        return z + lift
+
+    add("remote_body", rounded_box(96, 60, 20, 6, (x, y, at(-20))), "graphite", "remote", ex)
+    add("remote_display", rounded_box(56, 12, 1, .4, (x, y + 20, at(-9.6))), "black", "remote", ex)
     for i, bx in enumerate((x - 28, x, x + 28)):
         for j, by in enumerate((y - 16, y + 4)):
             mat = "orange" if (i, j) == (1, 1) else "rubber"
-            add(f"remote_key_{i}_{j}", cyl(5.5, 2, (bx, by, -9), "z"), mat, "remote", ex)
-    hinge = -45
+            add(f"remote_key_{i}_{j}", cyl(5.5, 2, (bx, by, at(-9)), "z"), mat, "remote", ex)
+    hinge = at(-45)
     for dy, side in ((-3.1, "near"), (3.1, "far")):
-        prong(x, y + dy, hinge, -30, f"remote_finger_{side}", "graphite", "remote", ex)
+        prong(x, y + dy, hinge, at(-30), f"remote_finger_{side}", "graphite", "remote", ex)
     for dy, side in ((-6.2, "near"), (0.0, "middle"), (6.2, "far")):
-        prong(x, y + dy, hinge, -60, f"mount_prong_{side}", "ceramic", "remote", ex)
-    add("mount_adapter", b.Box(15, 15.4, 6).translate((x, y, -63)), "ceramic", "remote", ex)
+        prong(x, y + dy, hinge, at(-60), f"mount_prong_{side}", "ceramic", "remote", ex)
+    add("mount_adapter", b.Box(15, 15.4, 6).translate((x, y, at(-63))), "ceramic", "remote", ex)
     add("thumbscrew", cyl(2.5, 22, (x, y, hinge), "y"), "steel", "remote", ex)
     add("thumbscrew_knob", cyl(7, 8, (x, y - 15, hinge), "y"), "orange", "remote", ex)
-    add("upper_ball_stem", cyl(5, 6, (x, y, -69), "z"), "ceramic", "remote", ex)
+    add("upper_ball_stem", cyl(5, 6, (x, y, at(-69)), "z"), "ceramic", "remote", ex)
     for z, name in [(-82, "upper_ball"), (-150, "lower_ball")]:
-        add(name, b.Sphere(12.7).translate((x, y, z)), "rubber", "remote", ex)
-        add(f"{name}_socket", ring(17, 11, 18, (x, y, z), "z"), "graphite", "remote", ex)
-    add("ball_arm", b.Box(26, 14, 50).translate((x, y, -116)), "graphite", "remote", ex)
-    add("arm_knob", cyl(10, 12, (x, y - 13, -116), "y"), "orange", "remote", ex)
-    add("lower_ball_stem", cyl(5, 13.5, (x, y, -156.75), "z"), "ceramic", "remote", ex)
-    add("mount_base", cyl(28, 5, (x, y, -166), "z"), "graphite", "remote", ex)
+        add(name, b.Sphere(12.7).translate((x, y, at(z))), "rubber", "remote", ex)
+        add(f"{name}_socket", ring(17, 11, 18, (x, y, at(z)), "z"), "graphite", "remote", ex)
+    add("ball_arm", b.Box(26, 14, 50).translate((x, y, at(-116))), "graphite", "remote", ex)
+    add("arm_knob", cyl(10, 12, (x, y - 13, at(-116)), "y"), "orange", "remote", ex)
+    add("lower_ball_stem", cyl(5, 13.5, (x, y, at(-156.75)), "z"), "ceramic", "remote", ex)
+    add("mount_base", cyl(28, 5, (x, y, at(-166)), "z"), "graphite", "remote", ex)
 
 
 def build():
@@ -317,7 +325,7 @@ PRESENTATION = {
     "label": {"text": "omatiller", "subtext": f"OPEN MARINE HARDWARE / {REVISION}",
               "position": [-150, 0, 57.6], "size": [112, 28]},
     "cable": [[-314, 0, -40], [-330, 0, -44], [-346, 3, -72], [-362, 6, -108], [-392, 2, -132]],
-    "target": [90, -30, -30],  # centers the assembled and exploded views at full travel
+    "target": [70, -30, -30],  # centers the assembled and exploded views at full travel
 }
 
 
