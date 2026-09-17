@@ -40,7 +40,6 @@ COLORS = {
     "ceramic": "#dadbd2", "graphite": "#252f35", "rubber": "#101a20",
     "steel": "#aab9c1", "orange": "#ed743a", "bronze": "#b88b4d",
     "pcb": "#245b4f", "black": "#151b20", "silver": "#84949e",
-    "wood": "#8a5a36", "gelcoat": "#c9cdc6",
 }
 
 DIMENSIONS = {
@@ -53,8 +52,6 @@ DIMENSIONS = {
     "ballScrew": {"mm": [16, SCREW_LEAD], "source": "catalog-typical SFU1605 screw and nut; confirm against the purchased part"},
     "motor": {"mm": [57, 155], "source": "provisional envelope for a 200 W brushless planetary gearmotor"},
     "odrive": {"mm": [66, 51], "source": "provisional envelope; confirm against ODrive S1 drawings"},
-    "goproMount": {"mm": [3.0, 3.2, 5.0], "source": "commonly published prong thickness, gap and M5 bolt; verify before printing"},
-    "mountBall": {"mm": 25.4, "source": "1-inch ball, as used by B-size ball mounts"},
 }
 
 
@@ -99,14 +96,6 @@ def screw_head(name, xyz, group, explode=(0, 0, 0)):
     add(name, head - recess, "steel", group, explode)
 
 
-def prong(x, y, z_axis, z_far, name, material, group, explode):
-    """One GoPro-style prong: a 3 mm plate, rounded around an M5 hinge on Y."""
-    height = abs(z_far - z_axis)
-    plate = b.Box(15, 3, height).translate((x, y, (z_axis + z_far) / 2))
-    shape = plate + cyl(7.5, 3, (x, y, z_axis), "y") - cyl(2.55, 5, (x, y, z_axis), "y")
-    add(name, shape, material, group, explode)
-
-
 def housing():
     outer = rounded_box(BODY_LENGTH, BODY_WIDTH, BODY_HEIGHT, 12, (BODY_X, 0, BODY_Z))
     cavity = rounded_box(BODY_LENGTH - 9, BODY_WIDTH - 9, BODY_HEIGHT - 9, 8,
@@ -133,10 +122,8 @@ def housing():
     add("service_cover", lid, "graphite", "cover", (0, 0, 70))
     add("cover_gasket", gasket, "orange", "cover", (0, 0, 40))
 
-    add("nameplate", rounded_box(118, 32, 1.3, .5, (-150, 0, 56.65)), "graphite", "cover", (0, 0, 70))
-    for x, name, mat in [(40, "standby_button", "orange"), (72, "auto_button", "rubber")]:
-        add(name, cyl(8, 2.4, (x, 0, 57.2), "z"), mat, "cover", (0, 0, 70))
-    add("status_light", rounded_box(13, 2, 1, .4, (8, 0, 56.5)), "orange", "cover", (0, 0, 70))
+    add("nameplate", rounded_box(118, 32, 1.3, .5, (-200, 0, 56.65)), "graphite", "cover", (0, 0, 70))
+    keypad()
     add("power_gland", ring(8, 4, 16, (-306, 0, -40)), "graphite", "housing", (-25, 0, -55))
 
 
@@ -164,13 +151,10 @@ def guide_and_ram():
     fitting_bottom = SCREW_Z - 13
     tiller_top = fitting_bottom - 2 - PIN_SHOULDER
     fitting_top = SCREW_Z + 13
-    add("pin_head", cyl(5, fitting_top - tiller_top, (PIN_X, 0, (fitting_top + tiller_top) / 2), "z"), "steel", "boat", (100, 0, -30), True)
-    add("pin_shoulder", ring(8, 5, 2, (PIN_X, 0, fitting_bottom - 1), "z"), "steel", "boat", (100, 0, -30), True)
+    add("pin_head", cyl(5, fitting_top - tiller_top, (PIN_X, 0, (fitting_top + tiller_top) / 2), "z"), "steel", "ram", (100, 0, -30), True)
+    add("pin_shoulder", ring(8, 5, 2, (PIN_X, 0, fitting_bottom - 1), "z"), "steel", "ram", (100, 0, -30), True)
     add("pin_shank", cyl(PIN_HOLE[0] / 2, PIN_HOLE[1], (PIN_X, 0, tiller_top - PIN_HOLE[1] / 2), "z"),
-        "steel", "boat", (100, 0, -30), True)
-    tiller = (rounded_box(40, 150, 34, 8, (PIN_X, 30, tiller_top - 17))
-              - cyl(PIN_HOLE[0] / 2 + .05, PIN_HOLE[1], (PIN_X, 0, tiller_top - PIN_HOLE[1] / 2), "z"))
-    add("tiller_section", tiller, "wood", "boat", (100, 0, -60), True)
+        "steel", "ram", (100, 0, -30), True)
 
 
 def drive():
@@ -257,54 +241,25 @@ def electronics():
 
 
 def mount():
-    # Pivot neck under the housing, a pin in a sleeve, and the seat it sits in.
+    # Pivot neck under the housing and a pin in the seat socket (the seat itself is not drawn).
     # The neck runs up through the floor and stands 1.5 mm proud inside.
     add("mount_neck", cyl(9, 32, (SOCKET_X, 0, -92), "z"), "steel", "mount", (0, 0, -20))
     add("pivot_pin", cyl(4, 25, (SOCKET_X, 0, SEAT_Z - 10.5), "z"), "steel", "mount", (0, 0, -20))
     add("socket_flange", ring(12, 4.1, 2, (SOCKET_X, 0, SEAT_Z + 1), "z"), "bronze", "mount", (0, 0, -29))
     add("socket_sleeve", ring(SOCKET_HOLE[0] / 2, 4.1, SOCKET_HOLE[1], (SOCKET_X, 0, SEAT_Z - SOCKET_HOLE[1] / 2), "z"),
         "bronze", "mount", (0, 0, -25))
-    # A strip of the seat, running fore and aft beside the tiller, long enough
-    # to carry the remote's base.
-    seat = (rounded_box(150, 320, 25, 6, (SOCKET_X + 10, -100, SEAT_Z - 12.5))
-            - cyl(SOCKET_HOLE[0] / 2 + .05, SOCKET_HOLE[1] + 2, (SOCKET_X, 0, SEAT_Z - SOCKET_HOLE[1] / 2), "z"))
-    # Exploded parts stay above the site's ground plane (z -170), and the seat
-    # (top z -140) below the exploded housing (bottom z -137).
-    add("cockpit_seat", seat, "gelcoat", "boat", (0, 0, -30))
 
-
-def remote():
-    # Keypad pod on GoPro-style fingers and a 1-inch ball arm, its base screwed
-    # to the cockpit seat beside the pilot.
-    x, y = SOCKET_X + 10, -200
-    lift = SEAT_Z + 168.5          # stack drawn from a base at z -168.5
-    ex = (0, -40, -10)             # rides with the exploded seat, then lifts clear
-
-    def at(z):
-        return z + lift
-
-    add("remote_body", rounded_box(96, 60, 20, 6, (x, y, at(-20))), "graphite", "remote", ex)
-    add("remote_display", rounded_box(56, 12, 1, .4, (x, y + 20, at(-9.6))), "black", "remote", ex)
-    for i, bx in enumerate((x - 28, x, x + 28)):
-        for j, by in enumerate((y - 16, y + 4)):
-            mat = "orange" if (i, j) == (1, 1) else "rubber"
-            add(f"remote_key_{i}_{j}", cyl(5.5, 2, (bx, by, at(-9)), "z"), mat, "remote", ex)
-    hinge = at(-45)
-    for dy, side in ((-3.1, "near"), (3.1, "far")):
-        prong(x, y + dy, hinge, at(-30), f"remote_finger_{side}", "graphite", "remote", ex)
-    for dy, side in ((-6.2, "near"), (0.0, "middle"), (6.2, "far")):
-        prong(x, y + dy, hinge, at(-60), f"mount_prong_{side}", "ceramic", "remote", ex)
-    add("mount_adapter", b.Box(15, 15.4, 6).translate((x, y, at(-63))), "ceramic", "remote", ex)
-    add("thumbscrew", cyl(2.5, 22, (x, y, hinge), "y"), "steel", "remote", ex)
-    add("thumbscrew_knob", cyl(7, 8, (x, y - 15, hinge), "y"), "orange", "remote", ex)
-    add("upper_ball_stem", cyl(5, 6, (x, y, at(-69)), "z"), "ceramic", "remote", ex)
-    for z, name in [(-82, "upper_ball"), (-150, "lower_ball")]:
-        add(name, b.Sphere(12.7).translate((x, y, at(z))), "rubber", "remote", ex)
-        add(f"{name}_socket", ring(17, 11, 18, (x, y, at(z)), "z"), "graphite", "remote", ex)
-    add("ball_arm", b.Box(26, 14, 50).translate((x, y, at(-116))), "graphite", "remote", ex)
-    add("arm_knob", cyl(10, 12, (x, y - 13, at(-116)), "y"), "orange", "remote", ex)
-    add("lower_ball_stem", cyl(5, 13.5, (x, y, at(-156.75)), "z"), "ceramic", "remote", ex)
-    add("mount_base", cyl(28, 5, (x, y, at(-166)), "z"), "graphite", "remote", ex)
+def keypad():
+    # The controls live on the cover, wired straight to the ESP32 below:
+    # a heading display, a status light, and six keys in two rows.
+    ex = (0, 0, 70)
+    add("display_window", rounded_box(80, 30, 1, .4, (-78, 0, 56.5)), "black", "keypad", ex)
+    add("status_light", rounded_box(2, 13, 1, .4, (-26, 0, 56.5)), "orange", "keypad", ex)
+    for x, (near, far) in [(12, ("minus_1", "minus_10")), (42, ("standby", "auto")),
+                           (72, ("plus_1", "plus_10"))]:
+        for y, name in ((-13, near), (13, far)):
+            mat = {"standby": "orange", "auto": "ceramic"}.get(name, "rubber")
+            add(f"key_{name}", cyl(7, 2.4, (x, y, 57.2), "z"), mat, "keypad", ex)
 
 
 def build():
@@ -316,14 +271,17 @@ def build():
     motor()
     electronics()
     mount()
-    remote()
     return b.Compound(label=f"omatiller_{REVISION}", children=parts)
 
 
 PRESENTATION = {
     # Everything here is drawn by the website, not part of the STEP assembly.
-    "label": {"text": "omatiller", "subtext": f"OPEN MARINE HARDWARE / {REVISION}",
-              "position": [-150, 0, 57.6], "size": [112, 28]},
+    "labels": [
+        {"text": "omatiller", "subtext": f"OPEN MARINE HARDWARE / {REVISION}",
+         "position": [-200, 0, 57.6], "size": [112, 28], "explodeAs": "nameplate"},
+        {"text": "245°", "subtext": "AUTO · LOCKED HEADING",
+         "position": [-78, 0, 57.2], "size": [76, 19], "explodeAs": "display_window"},
+    ],
     "cable": [[-314, 0, -40], [-330, 0, -44], [-346, 3, -72], [-362, 6, -108], [-392, 2, -132]],
     "target": [70, -30, -30],  # centers the assembled and exploded views at full travel
 }
