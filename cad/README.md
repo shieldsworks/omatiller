@@ -54,7 +54,10 @@ Before publishing a change, sweep the ram through its travel and check that no
 moving part intersects a fixed one; Concept 02 has no intersections at 0, 125 and
 250 mm, and its STEP export reimports with the same overall size. The remaining
 overlaps between fixed parts are deliberate seatings: balls in their sockets, the
-inset display and bezel accent, and the ball track sunk into the screw.
+inset display and bezel accent, and the ball track sunk into the screw. In the exploded
+view, no parts from different groups intersect, and nothing drops below the site's
+ground plane (z -170). The `presentation.target` keeps the assembled and exploded
+views in frame at full travel.
 
 Verified with Python 3.14 on aarch64, build123d 0.11.1 and
 cadquery-ocp-novtk 7.9.3.1.1. The package dependency graph is not fully locked;

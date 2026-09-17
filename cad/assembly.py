@@ -1,7 +1,7 @@
 """Omatiller 02: a dimensioned presentation concept, not fabrication geometry.
 
 All dimensions in mm. X follows the ram; Z is up; the origin is on the ram's
-centerline below the screw, just ahead of the ball nut at mid-travel.
+center plane, 22 mm below the screw axis, just ahead of the ball nut at mid-travel.
 Every modeled part is at mid-stroke.
 Named solids and presentation metadata stay together across GLB and STEP exports.
 """
@@ -128,16 +128,16 @@ def housing():
             lid = lid - cyl(1.8, 40, (x, y, 50), "z")
             add(f"cover_boss_{x}_{y}", ring(4.5, 1.8, 14, (x, y, SPLIT_Z - 7), "z"),
                 "graphite", "housing")
-            screw_head(f"cover_screw_{x}_{y}", (x, y, 57.1), "cover", (0, 0, 110))
-    add("lower_housing", lower, "ceramic", "housing", (0, 0, -70))
-    add("service_cover", lid, "graphite", "cover", (0, 0, 110))
-    add("cover_gasket", gasket, "orange", "cover", (0, 0, 65))
+            screw_head(f"cover_screw_{x}_{y}", (x, y, 57.1), "cover", (0, 0, 70))
+    add("lower_housing", lower, "ceramic", "housing", (0, 0, -55))
+    add("service_cover", lid, "graphite", "cover", (0, 0, 70))
+    add("cover_gasket", gasket, "orange", "cover", (0, 0, 40))
 
-    add("nameplate", rounded_box(118, 32, 1.3, .5, (-150, 0, 56.65)), "graphite", "cover", (0, 0, 110))
+    add("nameplate", rounded_box(118, 32, 1.3, .5, (-150, 0, 56.65)), "graphite", "cover", (0, 0, 70))
     for x, name, mat in [(40, "standby_button", "orange"), (72, "auto_button", "rubber")]:
-        add(name, cyl(8, 2.4, (x, 0, 57.2), "z"), mat, "cover", (0, 0, 110))
-    add("status_light", rounded_box(13, 2, 1, .4, (8, 0, 56.5)), "orange", "cover", (0, 0, 110))
-    add("power_gland", ring(8, 4, 16, (-306, 0, -40)), "graphite", "housing", (-25, 0, -70))
+        add(name, cyl(8, 2.4, (x, 0, 57.2), "z"), mat, "cover", (0, 0, 70))
+    add("status_light", rounded_box(13, 2, 1, .4, (8, 0, 56.5)), "orange", "cover", (0, 0, 70))
+    add("power_gland", ring(8, 4, 16, (-306, 0, -40)), "graphite", "housing", (-25, 0, -55))
 
 
 def guide_and_ram():
@@ -152,7 +152,7 @@ def guide_and_ram():
 
     # Hollow stainless pushrod over the screw, bolted to the ball-nut flange.
     add("pushrod", ring(11, 9, 309, (145.5, 0, SCREW_Z)), "steel", "ram", (80, 0, 0), True)
-    # 10 mm long, so it clears the wiper (x 157) by 2 mm at full retraction.
+    # 10 mm long, so it clears the wiper (x 157.5) by 1.5 mm at full retraction.
     add("rod_end_collar", ring(14, 11.05, 10, (289, 0, SCREW_Z)), "graphite", "ram", (90, 0, 0), True)
     end = (rounded_box(48, 32, 26, 6, (318, 0, SCREW_Z)) - cyl(7.05, 40, (PIN_X, 0, SCREW_Z), "z")
            - cyl(11.05, 12, (300, 0, SCREW_Z)))  # socket for the rod end
@@ -201,8 +201,8 @@ def drive():
         add(f"limit_sensor_{x}", rounded_box(13, 8, 7, 1, (x, 41, -8)), "orange", "drive")
 
     # Bulkhead carries the screw's fixed bearing and the motor flange.
-    # Stops below the cover joint (z 36), so the gasket runs clear over it.
-    bulkhead = (rounded_box(12, 88, 109, 3, (-234, 0, -19.5))
+    # Tall enough to close around the bearing bore (top z 38), short of the lid (z 51.5).
+    bulkhead = (rounded_box(12, 88, 115, 3, (-234, 0, -16.5))
                 - cyl(16.1, 20, (-234, 0, SCREW_Z)) - cyl(7, 20, (-234, 0, MOTOR_Z)))
     add("bearing_bulkhead", bulkhead, "graphite", "drive", (-25, 0, 0))
     add("fixed_bearing", ring(16, 6.1, 12, (-234, 0, SCREW_Z)), "silver", "drive", (-25, 0, 0))
@@ -217,7 +217,7 @@ def motor():
     for x in (-150, -123, -96):
         add(f"motor_band_{x}", ring(29.2, 28.55, 3, (x, 0, MOTOR_Z)), "graphite", "motor", ex)
     add("motor_end_cap", cyl(26, 10, (-78, 0, MOTOR_Z)), "graphite", "motor", ex)
-    add("motor_shaft", cyl(5, 34, (-245, 0, MOTOR_Z)), "steel", "motor", ex)
+    add("motor_shaft", cyl(5, 40, (-248, 0, MOTOR_Z)), "steel", "motor", ex)
 
     # 1:1 timing belt behind the bulkhead; the gearbox already sets 300 rpm.
     for z, label, bore in [(SCREW_Z, "screw", 6.05), (MOTOR_Z, "motor", 5.05)]:
@@ -258,15 +258,16 @@ def electronics():
 
 def mount():
     # Pivot neck under the housing, a pin in a sleeve, and the seat it sits in.
-    # The neck runs up through the floor to its boss inside (z -76).
+    # The neck runs up through the floor and stands 1.5 mm proud inside.
     add("mount_neck", cyl(9, 32, (SOCKET_X, 0, -92), "z"), "steel", "mount", (0, 0, -20))
     add("pivot_pin", cyl(4, 25, (SOCKET_X, 0, SEAT_Z - 10.5), "z"), "steel", "mount", (0, 0, -20))
-    add("socket_flange", ring(12, 4.1, 2, (SOCKET_X, 0, SEAT_Z + 1), "z"), "bronze", "mount", (0, 0, -25))
+    add("socket_flange", ring(12, 4.1, 2, (SOCKET_X, 0, SEAT_Z + 1), "z"), "bronze", "mount", (0, 0, -29))
     add("socket_sleeve", ring(SOCKET_HOLE[0] / 2, 4.1, SOCKET_HOLE[1], (SOCKET_X, 0, SEAT_Z - SOCKET_HOLE[1] / 2), "z"),
         "bronze", "mount", (0, 0, -25))
     seat = (rounded_box(150, 120, 25, 6, (SOCKET_X + 10, 0, SEAT_Z - 12.5))
             - cyl(SOCKET_HOLE[0] / 2 + .05, SOCKET_HOLE[1] + 2, (SOCKET_X, 0, SEAT_Z - SOCKET_HOLE[1] / 2), "z"))
-    # Exploded parts stay above the site's ground plane (z -170).
+    # Exploded parts stay above the site's ground plane (z -170), and the seat
+    # (top z -140) below the exploded housing (bottom z -137).
     add("cockpit_seat", seat, "gelcoat", "boat", (0, 0, -30))
 
 
@@ -316,7 +317,7 @@ PRESENTATION = {
     "label": {"text": "omatiller", "subtext": f"OPEN MARINE HARDWARE / {REVISION}",
               "position": [-150, 0, 57.6], "size": [112, 28]},
     "cable": [[-314, 0, -40], [-330, 0, -44], [-346, 3, -72], [-362, 6, -108], [-392, 2, -132]],
-    "target": [45, -30, -45],
+    "target": [90, -30, -30],  # centers the assembled and exploded views at full travel
 }
 
 
