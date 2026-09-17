@@ -25,7 +25,7 @@ them under `dimensions`.
 | Housing length | 445 mm | same, p. 35 (the handbook unit's length) |
 | Ram travel | 250 mm | provisional; measure Dash's tiller travel |
 | Ball screw and nut | 16 mm, 5 mm lead; SFU1605 nut | catalog-typical; confirm against the purchased part |
-| Gearmotor | Ø57 × 150 mm | provisional envelope for a 200 W brushless planetary |
+| Gearmotor | Ø57 × 155 mm (Ø56 gearbox) | provisional envelope for a 200 W brushless planetary |
 | ODrive S1 | 66 × 51 mm | provisional envelope |
 | GoPro-style prongs | 3.0 mm plates, 3.2 mm gaps, M5 | commonly published values; verify before printing |
 | Mount balls | 25.4 mm | 1-inch ball, as used by B-size ball mounts |
@@ -52,7 +52,9 @@ spaces from node names).
 
 Before publishing a change, sweep the ram through its travel and check that no
 moving part intersects a fixed one; Concept 02 has no intersections at 0, 125 and
-250 mm, and its STEP export reimports with the same overall size.
+250 mm, and its STEP export reimports with the same overall size. The remaining
+overlaps between fixed parts are deliberate seatings: balls in their sockets, the
+inset display and bezel accent, and the ball track sunk into the screw.
 
 Verified with Python 3.14 on aarch64, build123d 0.11.1 and
 cadquery-ocp-novtk 7.9.3.1.1. The package dependency graph is not fully locked;

@@ -1,7 +1,8 @@
 """Omatiller 02: a dimensioned presentation concept, not fabrication geometry.
 
-All dimensions in mm. X follows the ram; Z is up; the origin sits under the
-ball nut's mid-travel position. Every modeled part is at mid-stroke.
+All dimensions in mm. X follows the ram; Z is up; the origin is on the ram's
+centerline below the screw, just ahead of the ball nut at mid-travel.
+Every modeled part is at mid-stroke.
 Named solids and presentation metadata stay together across GLB and STEP exports.
 """
 from pathlib import Path
@@ -50,7 +51,7 @@ DIMENSIONS = {
     "socketHole": {"mm": list(SOCKET_HOLE), "source": "Raymarine ST1000/2000 Plus handbook, p. 37"},
     "stroke": {"mm": STROKE, "source": "provisional; measure Dash's tiller travel"},
     "ballScrew": {"mm": [16, SCREW_LEAD], "source": "catalog-typical SFU1605 screw and nut; confirm against the purchased part"},
-    "motor": {"mm": [57, 150], "source": "provisional envelope for a 200 W brushless planetary gearmotor"},
+    "motor": {"mm": [57, 155], "source": "provisional envelope for a 200 W brushless planetary gearmotor"},
     "odrive": {"mm": [66, 51], "source": "provisional envelope; confirm against ODrive S1 drawings"},
     "goproMount": {"mm": [3.0, 3.2, 5.0], "source": "commonly published prong thickness, gap and M5 bolt; verify before printing"},
     "mountBall": {"mm": 25.4, "source": "1-inch ball, as used by B-size ball mounts"},
@@ -113,7 +114,12 @@ def housing():
     hollow = (outer - cavity
               - cyl(13, 30, (145, 0, SCREW_Z))            # ram opening
               - cyl(9.2, 12, (SOCKET_X, 0, -80), "z")     # pivot neck
-              - cyl(4.2, 12, (-300, 0, -40)))             # power gland
+              - cyl(8.05, 12, (-300, 0, -40)))            # power gland
+    # Sits in a groove on the wall between the cavity (436 x 91, r8) and the outside (445 x 100).
+    gasket = (b.extrude(b.RectangleRounded(441, 96, 10), amount=1.6)
+              - b.extrude(b.RectangleRounded(437, 92, 8.5), amount=1.6))
+    gasket = gasket.translate((BODY_X, 0, SPLIT_Z - .8))
+    hollow = hollow - gasket
     below = SPLIT_Z - (BODY_Z - BODY_HEIGHT / 2 - 5)
     lower = hollow & b.Box(500, 120, below).translate((BODY_X, 0, SPLIT_Z - below / 2))
     lid = hollow & b.Box(500, 120, 30).translate((BODY_X, 0, SPLIT_Z + 15))
@@ -122,11 +128,9 @@ def housing():
             lid = lid - cyl(1.8, 40, (x, y, 50), "z")
             add(f"cover_boss_{x}_{y}", ring(4.5, 1.8, 14, (x, y, SPLIT_Z - 7), "z"),
                 "graphite", "housing")
-            screw_head(f"cover_screw_{x}_{y}", (x, y, 56.6), "cover", (0, 0, 110))
+            screw_head(f"cover_screw_{x}_{y}", (x, y, 57.1), "cover", (0, 0, 110))
     add("lower_housing", lower, "ceramic", "housing", (0, 0, -70))
     add("service_cover", lid, "graphite", "cover", (0, 0, 110))
-    gasket = (rounded_box(432, 88, 1.6, .7, (BODY_X, 0, SPLIT_Z)) -
-              rounded_box(425, 81, 4, 1.5, (BODY_X, 0, SPLIT_Z)))
     add("cover_gasket", gasket, "orange", "cover", (0, 0, 65))
 
     add("nameplate", rounded_box(118, 32, 1.3, .5, (-150, 0, 56.65)), "graphite", "cover", (0, 0, 110))
@@ -142,7 +146,7 @@ def guide_and_ram():
         ("guide_bushing", 13, 11.15, 25, 132.5, "bronze", 25),
         ("nose_bezel", 20, 11.3, 8, 149, "graphite", 45),
         ("nose_accent", 19.2, 11.3, 2, 152.5, "orange", 55),
-        ("rod_wiper", 13, 11.05, 4, 155, "rubber", 65),
+        ("rod_wiper", 13, 11.05, 4, 155.5, "rubber", 65),
     ]:
         add(name, ring(ro, ri, length, (x, 0, SCREW_Z)), mat, "guide", (offset, 0, 0))
 
@@ -150,7 +154,8 @@ def guide_and_ram():
     add("pushrod", ring(11, 9, 309, (145.5, 0, SCREW_Z)), "steel", "ram", (80, 0, 0), True)
     # 10 mm long, so it clears the wiper (x 157) by 2 mm at full retraction.
     add("rod_end_collar", ring(14, 11.05, 10, (289, 0, SCREW_Z)), "graphite", "ram", (90, 0, 0), True)
-    end = rounded_box(48, 32, 26, 6, (318, 0, SCREW_Z)) - cyl(7.05, 40, (PIN_X, 0, SCREW_Z), "z")
+    end = (rounded_box(48, 32, 26, 6, (318, 0, SCREW_Z)) - cyl(7.05, 40, (PIN_X, 0, SCREW_Z), "z")
+           - cyl(11.05, 12, (300, 0, SCREW_Z)))  # socket for the rod end
     add("tiller_fitting", end, "graphite", "ram", (100, 0, 0), True)
     add("fitting_bushing", ring(7, 5.1, 26, (PIN_X, 0, SCREW_Z), "z"), "bronze", "ram", (100, 0, 0), True)
     add("release_tab", rounded_box(22, 26, 5, 2, (312, 0, SCREW_Z + 15.5)), "orange", "ram", (100, 0, 14), True)
@@ -158,7 +163,8 @@ def guide_and_ram():
     # Tiller pin: shoulder 12.5 mm above the tiller face, 6 mm shank 25 mm deep.
     fitting_bottom = SCREW_Z - 13
     tiller_top = fitting_bottom - 2 - PIN_SHOULDER
-    add("pin_head", cyl(5, 41.5, (PIN_X, 0, tiller_top + 20.75), "z"), "steel", "boat", (100, 0, -30), True)
+    fitting_top = SCREW_Z + 13
+    add("pin_head", cyl(5, fitting_top - tiller_top, (PIN_X, 0, (fitting_top + tiller_top) / 2), "z"), "steel", "boat", (100, 0, -30), True)
     add("pin_shoulder", ring(8, 5, 2, (PIN_X, 0, fitting_bottom - 1), "z"), "steel", "boat", (100, 0, -30), True)
     add("pin_shank", cyl(PIN_HOLE[0] / 2, PIN_HOLE[1], (PIN_X, 0, tiller_top - PIN_HOLE[1] / 2), "z"),
         "steel", "boat", (100, 0, -30), True)
@@ -169,13 +175,13 @@ def guide_and_ram():
 
 def drive():
     # Ball screw: 16 mm nominal, 5 mm lead. The ridge suggests the ball track.
-    add("screw_shaft", cyl(7.2, 351, (-60.5, 0, SCREW_Z)), "steel", "drive")
-    add("screw_journal", cyl(6, 36, (-254, 0, SCREW_Z)), "steel", "drive")
-    helix = b.Helix(SCREW_LEAD, 351, 7.6)
+    add("screw_shaft", cyl(7.2, 343, (-56.5, 0, SCREW_Z)), "steel", "drive")
+    add("screw_journal", cyl(6, 44, (-250, 0, SCREW_Z)), "steel", "drive")
+    helix = b.Helix(SCREW_LEAD, 340, 7.6)
     # A diamond profile tessellates far lighter than a circle over 70 turns.
     profile = b.Plane(origin=helix @ 0, z_dir=helix % 0) * b.RegularPolygon(1.0, 4)
     track = b.sweep(profile, path=helix, is_frenet=True)
-    add("screw_helix", track.rotate(b.Axis.Y, 90).translate((-236, 0, SCREW_Z)), "steel", "drive")
+    add("screw_helix", track.rotate(b.Axis.Y, 90).translate((-226, 0, SCREW_Z)), "steel", "drive")
 
     # SFU1605-style nut: 28 mm body, 48 mm flange at the front, six bolts.
     add("ball_nut", ring(14, 8.6, 42, (-40, 0, SCREW_Z)), "bronze", "ram", moving=True)
@@ -195,7 +201,8 @@ def drive():
         add(f"limit_sensor_{x}", rounded_box(13, 8, 7, 1, (x, 41, -8)), "orange", "drive")
 
     # Bulkhead carries the screw's fixed bearing and the motor flange.
-    bulkhead = (rounded_box(12, 88, 122, 3, (-234, 0, -13))
+    # Stops below the cover joint (z 36), so the gasket runs clear over it.
+    bulkhead = (rounded_box(12, 88, 109, 3, (-234, 0, -19.5))
                 - cyl(16.1, 20, (-234, 0, SCREW_Z)) - cyl(7, 20, (-234, 0, MOTOR_Z)))
     add("bearing_bulkhead", bulkhead, "graphite", "drive", (-25, 0, 0))
     add("fixed_bearing", ring(16, 6.1, 12, (-234, 0, SCREW_Z)), "silver", "drive", (-25, 0, 0))
@@ -208,15 +215,15 @@ def motor():
     add("gearbox", cyl(28, 57, (-191.5, 0, MOTOR_Z)), "silver", "motor", ex)
     add("motor_body", cyl(28.5, 80, (-123, 0, MOTOR_Z)), "black", "motor", ex)
     for x in (-150, -123, -96):
-        add(f"motor_band_{x}", ring(29.2, 28, 3, (x, 0, MOTOR_Z)), "graphite", "motor", ex)
+        add(f"motor_band_{x}", ring(29.2, 28.55, 3, (x, 0, MOTOR_Z)), "graphite", "motor", ex)
     add("motor_end_cap", cyl(26, 10, (-78, 0, MOTOR_Z)), "graphite", "motor", ex)
     add("motor_shaft", cyl(5, 34, (-245, 0, MOTOR_Z)), "steel", "motor", ex)
 
     # 1:1 timing belt behind the bulkhead; the gearbox already sets 300 rpm.
-    for z, label in [(SCREW_Z, "screw"), (MOTOR_Z, "motor")]:
-        add(f"{label}_pulley", cyl(16, 10, (-262, 0, z)), "bronze", "transmission", (-55, 0, 0))
+    for z, label, bore in [(SCREW_Z, "screw", 6.05), (MOTOR_Z, "motor", 5.05)]:
+        add(f"{label}_pulley", ring(16, bore, 10, (-262, 0, z)), "bronze", "transmission", (-55, 0, 0))
         for x, side in ((-267.75, "rear"), (-256.25, "front")):
-            add(f"{label}_pulley_flange_{side}", ring(17.5, 6, 1.5, (x, 0, z)), "graphite", "transmission", (-55, 0, 0))
+            add(f"{label}_pulley_flange_{side}", ring(17.5, bore, 1.5, (x, 0, z)), "graphite", "transmission", (-55, 0, 0))
     span = SCREW_Z - MOTOR_Z
     with b.BuildSketch(b.Plane.YZ) as belt:
         with b.Locations((0, (SCREW_Z + MOTOR_Z) / 2)):
@@ -227,7 +234,8 @@ def motor():
 
 def electronics():
     ex = (0, -95, -25)
-    add("heat_spreader", rounded_box(135, 80, 4, 1, (22.5, 0, -74)), "silver", "electronics", ex)
+    # 74 mm wide, so it sits on the flat of the floor, inside the wall fillets.
+    add("heat_spreader", rounded_box(135, 74, 5.5, 1, (22.5, 0, -74.75)), "silver", "electronics", ex)
     # ODrive S1 motor controller (provisional envelope).
     add("odrive_board", rounded_box(66, 51, 1.6, .5, (-5, 0, -66)), "pcb", "electronics", ex)
     add("odrive_power_stage", rounded_box(34, 28, 8, 1, (-12, -4, -61)), "black", "electronics", ex)
@@ -240,24 +248,26 @@ def electronics():
     add("can_transceiver", rounded_box(8, 6, 2, .3, (76, -6, -64.2)), "black", "electronics", ex)
     for x, y in [(-35, -20), (-35, 20), (25, -20), (25, 20),
                  (38, -10), (38, 10), (82, -10), (82, 10)]:
-        add(f"standoff_{x}_{y}", ring(2.5, 1.2, 6, (x, y, -69), "z"), "bronze", "electronics", ex)
+        add(f"standoff_{x}_{y}", ring(2.5, 1.2, 5.2, (x, y, -69.4), "z"), "bronze", "electronics", ex)
     # 12 to 24 V converter, so the ODrive runs mid-range on a sagging battery.
-    add("dc_dc_converter", rounded_box(46, 40, 24, 2, (116, 0, -64)), "graphite", "electronics", ex)
+    add("dc_dc_converter", rounded_box(44, 40, 25.5, 2, (112, 0, -64.75)), "graphite", "electronics", ex)
     add("dc_dc_fins", b.Compound(children=[
-        b.Box(46, 1.5, 4).translate((116, y, -50)) for y in (-15, -9, -3, 3, 9, 15)]),
+        b.Box(44, 1.5, 4).translate((112, y, -50)) for y in (-15, -9, -3, 3, 9, 15)]),
         "silver", "electronics", ex)
 
 
 def mount():
     # Pivot neck under the housing, a pin in a sleeve, and the seat it sits in.
-    add("mount_neck", cyl(9, 26, (SOCKET_X, 0, -95), "z"), "steel", "mount", (0, 0, -40))
-    add("pivot_pin", cyl(4, 25, (SOCKET_X, 0, SEAT_Z - 10.5), "z"), "steel", "mount", (0, 0, -40))
-    add("socket_flange", ring(12, 4.1, 2, (SOCKET_X, 0, SEAT_Z + 1), "z"), "bronze", "mount", (0, 0, -70))
+    # The neck runs up through the floor to its boss inside (z -76).
+    add("mount_neck", cyl(9, 32, (SOCKET_X, 0, -92), "z"), "steel", "mount", (0, 0, -20))
+    add("pivot_pin", cyl(4, 25, (SOCKET_X, 0, SEAT_Z - 10.5), "z"), "steel", "mount", (0, 0, -20))
+    add("socket_flange", ring(12, 4.1, 2, (SOCKET_X, 0, SEAT_Z + 1), "z"), "bronze", "mount", (0, 0, -25))
     add("socket_sleeve", ring(SOCKET_HOLE[0] / 2, 4.1, SOCKET_HOLE[1], (SOCKET_X, 0, SEAT_Z - SOCKET_HOLE[1] / 2), "z"),
-        "bronze", "mount", (0, 0, -70))
+        "bronze", "mount", (0, 0, -25))
     seat = (rounded_box(150, 120, 25, 6, (SOCKET_X + 10, 0, SEAT_Z - 12.5))
             - cyl(SOCKET_HOLE[0] / 2 + .05, SOCKET_HOLE[1] + 2, (SOCKET_X, 0, SEAT_Z - SOCKET_HOLE[1] / 2), "z"))
-    add("cockpit_seat", seat, "gelcoat", "boat", (0, 0, -95))
+    # Exploded parts stay above the site's ground plane (z -170).
+    add("cockpit_seat", seat, "gelcoat", "boat", (0, 0, -30))
 
 
 def remote():
@@ -284,7 +294,7 @@ def remote():
         add(f"{name}_socket", ring(17, 11, 18, (x, y, z), "z"), "graphite", "remote", ex)
     add("ball_arm", b.Box(26, 14, 50).translate((x, y, -116)), "graphite", "remote", ex)
     add("arm_knob", cyl(10, 12, (x, y - 13, -116), "y"), "orange", "remote", ex)
-    add("lower_ball_stem", cyl(5, 13.5, (x, y, -156.75), "z"), "rubber", "remote", ex)
+    add("lower_ball_stem", cyl(5, 13.5, (x, y, -156.75), "z"), "ceramic", "remote", ex)
     add("mount_base", cyl(28, 5, (x, y, -166), "z"), "graphite", "remote", ex)
 
 
@@ -306,7 +316,7 @@ PRESENTATION = {
     "label": {"text": "omatiller", "subtext": f"OPEN MARINE HARDWARE / {REVISION}",
               "position": [-150, 0, 57.6], "size": [112, 28]},
     "cable": [[-314, 0, -40], [-330, 0, -44], [-346, 3, -72], [-362, 6, -108], [-392, 2, -132]],
-    "target": [15, -30, -45],
+    "target": [45, -30, -45],
 }
 
 
