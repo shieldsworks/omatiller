@@ -14,9 +14,10 @@ It highlights the planned sensor/controller path with no required NMEA network.
 The following hardware and control milestones remain future work.
 
 Concept 02 (September 17, 2026) replaced the first study's provisional drive and
-geometry with the decisions below: 105 named parts, a 1605 ball screw, a brushless
+geometry with the decisions below: 83 named parts, a 1605 ball screw, a brushless
 gearmotor, the ESP32 and ODrive S1 controller, the handbook's socket and pin spacing,
-a tiller pin and seat socket, and a remote keypad. `cad/README.md` lists every
+a tiller pin and seat socket, and a keypad with a heading display on the cover. The
+site shows it as a product shot, without a seat or tiller. `cad/README.md` lists every
 dimension with its source. The moving parts clear the fixed ones at 0, 125 and
 250 mm of travel.
 
@@ -44,10 +45,13 @@ dimension with its source. The moving parts clear the fixed ones at 0, 125 and
   goal; the S1 runs ODrive's firmware.
 - **A 1605 ball screw, not ACME.** It passes about 90% of the motor's work to the
   nut against about 40% for ACME, and it can be pushed back by hand.
-- **GoPro-style and 1-inch ball mounts where they fit.** The remote keypad, a phone
-  or display, and cameras for filming trials. Never the ram's two ends, which carry
-  the steering load, and never the compass, where a slipped mount would silently
-  shift the heading.
+- **The keypad lives on the unit.** Six keys (AUTO, STBY, ±1°, ±10°), a status light
+  and a heading display on the cover, wired straight to the ESP32, as on the classic
+  tiller pilots. Casey chose this over a remote pod on a mount.
+- **GoPro-style and 1-inch ball mounts only for accessories**, such as a phone or
+  cameras for filming trials. Never the pilot itself, whose ends carry the steering
+  load, and never the compass, where a slipped mount would silently shift the
+  heading.
 
 ## Direction already chosen
 
