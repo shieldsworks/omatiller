@@ -13,6 +13,42 @@ ram travel, component descriptions, keyboard controls, and a static fallback.
 It highlights the planned sensor/controller path with no required NMEA network.
 The following hardware and control milestones remain future work.
 
+Concept 02 (September 17, 2026) replaced the first study's provisional drive and
+geometry with the decisions below: 105 named parts, a 1605 ball screw, a brushless
+gearmotor, the ESP32 and ODrive S1 controller, the handbook's socket and pin spacing,
+a tiller pin and seat socket, and a remote keypad. `cad/README.md` lists every
+dimension with its source. The moving parts clear the fixed ones at 0, 125 and
+250 mm of travel.
+
+## Decisions, September 17, 2026
+
+- **The heading sensor is an omarig node.** It serves the whole suite (heading-up
+  charts, AIS bearings, instruments), not only the pilot. It sits in its own box at
+  least 750 mm from the ram's motor, bolted down, and reaches the pilot controller
+  by wire. It also sends NMEA 0183 `HDG`/`ROT` over Wi-Fi, which omakeel ingests as
+  a new `heading` key.
+- **No commercial reference pilot.** Casey won't buy one. The mounting dimensions
+  come from Raymarine's ST1000 Plus/ST2000 Plus handbook (1996), found in
+  Raymarine's public document library (retired products, Autopilots, Tiller
+  Pilots): socket to pin 589 mm with the tiller centered, rudder stock to pin
+  460 mm at right angles, pilot mounted level on the starboard seat by default.
+  The pin goes in a 6 mm hole 25 mm deep with its shoulder 12.5 mm above the tiller;
+  the socket goes in a 12.5 mm hole 25 mm deep, backed if the seat is under 25 mm.
+  The handbook gives no stroke, thrust, pin-head or socket-bore size, so Omatiller
+  uses its own pin and socket at that spacing.
+- **Brushless drive from the first bench build.** A 200 W-class brushless planetary
+  gearmotor driven by an ODrive S1, which the ESP32 commands over CAN. The S1's
+  minimum input is 12 V, so a 12 to 24 V converter feeds it and the motor is the
+  24 V variant. At 10:1 the gearmotor gives the ball screw its 300 rpm target with
+  several times the 0.88 N·m required. Writing our own motor control stays a later
+  goal; the S1 runs ODrive's firmware.
+- **A 1605 ball screw, not ACME.** It passes about 90% of the motor's work to the
+  nut against about 40% for ACME, and it can be pushed back by hand.
+- **GoPro-style and 1-inch ball mounts where they fit.** The remote keypad, a phone
+  or display, and cameras for filming trials. Never the ram's two ends, which carry
+  the steering load, and never the compass, where a slipped mount would silently
+  shift the heading.
+
 ## Direction already chosen
 
 - Build a custom tiller pilot for Dash, a Pacific Seacraft 25.
@@ -69,10 +105,9 @@ already allowed, so heading telemetry can be added without adding command traffi
    A mechanical release allows manual steering even if the drive is jammed.
    Removing electrical power alone does not establish manual override.
 
-Proposed ownership: reusable sensor hardware and Rust firmware in omarig;
-pilot-specific mechanics, control, simulator, and UI in omatiller; heading
-ingestion and distribution in omakeel. This remains a proposal: the prior session
-left sensor ownership open. It does not need to block the first concept model.
+Ownership: reusable sensor hardware and Rust firmware in omarig; pilot-specific
+mechanics, control, simulator, and UI in omatiller; heading ingestion and
+distribution in omakeel. Casey confirmed the heading sensor belongs in omarig.
 
 ## Milestone 1 — CAD concept and website
 
@@ -89,9 +124,8 @@ are selected. Show the load path and reserve real space for fasteners and tools.
 Start with a provisional 250 mm stroke. Sweep retracted, centered, and extended
 positions for collisions and clearance. This number is a layout assumption, not a
 confirmed requirement for Dash. Obtain exact mount, pin, socket, and installation
-dimensions from the manufacturer's drawings and boat measurements before fixing
-the interfaces. Raymarine's [manual entry point](https://www.raymarine.com/en-gb/download/st1000-st2000-tiller-drive-manuals)
-is the reference for the commercial mounting comparison.
+dimensions from boat measurements before fixing the interfaces. The commercial
+spacing now comes from the Raymarine handbook (see the decisions above).
 
 Add `omahoy/site/omatiller/index.html` using the existing styles and theme picker.
 Use the exported GLB for orbit, zoom, labeled components, and an exploded-view
@@ -192,9 +226,13 @@ faults, and recovery. Route steering needs its own tests and engagement semantic
 
 ## Next concrete work
 
-Review the first concept assembly and website preview, then refine the mechanical
-layout and choose the heading sensor. Assemble a purchase shortlist with dated
-pricing and availability. No motor, driver, or IMU has been selected or ordered.
+Measure Dash: check that the 589/460 mm layout fits the starboard seat, the tiller's
+height above the seat (the handbook's standard is 64 mm; Concept 02 needs about
+105 mm), seat thickness and full tiller swing, then log tiller load with a luggage
+scale on a windy afternoon. Those set the stroke, the thrust and any socket pedestal.
+Then start the omarig compass node. Assemble a purchase shortlist with dated pricing
+and availability: the drive family is chosen, but no motor, controller, screw or IMU
+has been ordered.
 
 ## Recovery notes and references
 
